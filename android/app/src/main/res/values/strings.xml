@@ -84,4 +84,10 @@
     <string name="pick_bottom">Choose the app for the bottom panel</string>
     <string name="show_top_panel">Top panel (Google Maps by default)</string>
     <string name="show_bottom_panel">Bottom panel + media keys (YouTube by default)</string>
+    <string name="expand">Full screen</string>
+    <string name="radio">Radio</string>
+    <string name="bt_music">Bluetooth music</string>
+    <string name="add_window_app">Add an app to the window switcher</string>
+    <string name="design_factory">«Factory look» (design 1) ✓</string>
+    <string name="design_talabak">«Talabak» (design 2)</string>
 </resources>

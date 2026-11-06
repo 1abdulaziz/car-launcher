@@ -46,7 +46,21 @@ Toolchain: AGP 9.5.0 (built-in Kotlin), Gradle 9.6.0, JDK 17, build-tools 36.0.0
    adb shell settings put secure enabled_accessibility_services dev.carlauncher/.FloatService
    adb shell settings put secure accessibility_enabled 1
    ```
+   From v0.2.0, also run:
+   ```bash
+   adb shell cmd notification allow_listener dev.carlauncher/dev.carlauncher.MediaListener   # now-playing on the music card
+   adb shell settings put global hidden_api_policy 1                                          # live app window (freeform launch)
+   ```
 4. Press Home and choose **Car Launcher** as the default home app. The factory launcher stays installed and can be chosen again at any time.
+
+## v0.2.0 — «Factory look» (design 1)
+A faithful copy of the head unit's factory (Dofun) home screen, drawn with our own artwork:
+- **Top:** six apps over a label strip.
+- **Middle:** a **live app window**. The chosen app (Google Maps by default) runs as a freeform window sized to the box. A strip under it holds quick-switch icons (tap to swap the window app, + to add, long-press to remove) and a «Full screen» button.
+- **Bottom:** two swipeable pages:
+  - music card (now playing from any app's media session) + clock and weather + radio card
+  - the car + speed
+- «Talabak» stays selectable as design 2 (Settings → Design).
 
 ## Roadmap
 - **Phase 2:**

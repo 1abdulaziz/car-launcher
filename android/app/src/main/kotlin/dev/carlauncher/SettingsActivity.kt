@@ -77,7 +77,9 @@ class SettingsActivity : Activity() {
 
         // Several designs ship over time; design 1 «طلبك» is the first (owner 2026-11-06).
         section(R.string.s_design)
-        row(s(R.string.design1)) { }
+        val design = Apps.prefs(this).getString("design", "factory")
+        row(s(R.string.design_factory), if (design == "factory") "✓" else null) { Apps.prefs(this).edit().putString("design", "factory").apply(); setContentView(build()) }
+        row(s(R.string.design_talabak), if (design == "talabak") "✓" else null) { Apps.prefs(this).edit().putString("design", "talabak").apply(); setContentView(build()) }
         body.addView(text(s(R.string.more_designs), SP_MIN, Pal.DIM))
 
         root.addView(ScrollView(this).apply { addView(body) }, lp(-1, 0, 1f).apply { topMargin = dp(6) })

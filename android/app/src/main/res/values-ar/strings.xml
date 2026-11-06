@@ -81,4 +81,10 @@
     <string name="pick_bottom">اختر تطبيق المربع اللي تحت</string>
     <string name="show_top_panel">المربع اللي فوق (قوقل ماب افتراضياً)</string>
     <string name="show_bottom_panel">المربع اللي تحت وأزرار الصوت (يوتيوب افتراضياً)</string>
+    <string name="expand">تكبير</string>
+    <string name="radio">الراديو</string>
+    <string name="bt_music">موسيقى بلوتوث</string>
+    <string name="add_window_app">أضف تطبيق لأزرار المربع</string>
+    <string name="design_factory">«شكل الوكالة» (التصميم الأول) ✓</string>
+    <string name="design_talabak">«طلبك» (التصميم الثاني)</string>
 </resources>

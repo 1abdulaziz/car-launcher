@@ -42,6 +42,10 @@ class HomeActivity : Activity(), LocationListener {
     private var lastWeatherAt = 0L
     private var builtLang = ""
     private var lastWeather: Weather.Now? = null
+    private var city: String? = null
+    // Designs: «factory» = copy of the Dofun home (default, v0.2.0) · «talabak» = design 1 from the prototype.
+    private var factory: FactoryHome? = null
+    private fun design() = Apps.prefs(this).getString("design", "factory") ?: "factory"
 
     override fun attachBaseContext(base: Context) = super.attachBaseContext(Lang.wrap(base))
 
@@ -57,12 +61,42 @@ class HomeActivity : Activity(), LocationListener {
         super.onResume()
         // Language changed in Settings → recreate so resources + layout direction follow it.
         if (Lang.code(this) != builtLang) { recreate(); return }
-        setContentView(build()); renderTiles(); showWeather(); startGps(); tick.run()
+        render(); startGps(); tick.run()
     }
     override fun onPause() { super.onPause(); ui.removeCallbacks(tick); (getSystemService(LOCATION_SERVICE) as LocationManager).removeUpdates(this) }
     override fun onRequestPermissionsResult(c: Int, p: Array<out String>, r: IntArray) { startGps() }
     // A home screen has nowhere to go back to — Back here never leaves the launcher.
     @Deprecated("Deprecated in Java") override fun onBackPressed() {}
+
+    private fun render() {
+        if (design() == "factory") {
+            factory = FactoryHome(this).also { setContentView(it.build()) }
+            showWeather()
+            // Start the window app live once the box has its final size.
+            window.decorView.postDelayed({ launchLive() }, 600)
+        } else { factory = null; setContentView(build()); renderTiles(); showWeather() }
+    }
+
+    // ---------- factory design hooks ----------
+    fun launchLive() {
+        val f = factory ?: return
+        val r = f.mapRect() ?: return
+        val pkg = Panels.get(this, Panels.TOP) ?: return
+        if (!LiveWindow.launch(this, pkg, r)) toast(s(R.string.app_wont_open, Apps.entry(this, pkg)?.label ?: pkg))
+    }
+    fun rebuildAndLaunch() = render()
+    fun openFull(pkg: String?) { if (pkg == null || !LiveWindow.openFull(this, pkg)) toast(s(R.string.maps_missing)) }
+    fun pickFactoryApp(slot: Int) {
+        lateinit var d: Dialog
+        d = sheet(s(R.string.pick_for_slot, slot + 1), appGrid { a -> val sl = FactoryApps.slots(this); sl[slot] = a.pkg; FactoryApps.save(this, sl); d.dismiss(); render() })
+        d.show()
+    }
+    fun pickPanelPublic(slot: String) = pickPanel(slot)
+    fun addWindowApp() {
+        lateinit var d: Dialog
+        d = sheet(s(R.string.add_window_app), appGrid { a -> WindowApps.add(this, a.pkg); Panels.set(this, Panels.TOP, a.pkg); d.dismiss(); render() })
+        d.show()
+    }
 
     private fun build(): View {
         val root = LinearLayout(this).apply {
@@ -201,6 +235,11 @@ class HomeActivity : Activity(), LocationListener {
 
     private val tick = object : Runnable {
         override fun run() {
+            factory?.let { f ->
+                f.tick(isArabic())
+                if (System.currentTimeMillis() - lastWeatherAt > 30 * 60_000) refreshWeather()
+                ui.postDelayed(this, 2000); return
+            }
             val now = Date()
             val h = SimpleDateFormat("h:mm", ULocale("en")).format(now)
             val pm = SimpleDateFormat("a", ULocale("en")).format(now) != "AM"
@@ -229,11 +268,17 @@ class HomeActivity : Activity(), LocationListener {
     private fun refreshWeather() {
         lastWeatherAt = System.currentTimeMillis()
         val la = lat; val ln = lng
-        Thread { val w = Weather.fetch(la, ln); ui.post { if (w != null) lastWeather = w; showWeather(offline = w == null) } }.start()
+        Thread {
+            val w = Weather.fetch(la, ln)
+            // City name for the factory weather block (on-device Geocoder; null when offline).
+            val c = runCatching { android.location.Geocoder(this, resources.configuration.locales[0]).getFromLocation(la, ln, 1)?.firstOrNull()?.let { it.subLocality ?: it.locality } }.getOrNull()
+            ui.post { if (w != null) lastWeather = w; if (c != null) city = c; showWeather(offline = w == null) }
+        }.start()
     }
 
     private fun showWeather(offline: Boolean = false) {
         val w = lastWeather
+        if (w != null) factory?.onWeather(w.temp, s(Weather.label(w.code)), city)
         if (w != null) { weatherTv?.text = "${w.temp}°"; weatherSub?.text = "${s(Weather.label(w.code))} · ${w.max}°/${w.min}°" }
         else if (offline) weatherSub?.text = s(R.string.weather_offline)
     }
@@ -250,7 +295,8 @@ class HomeActivity : Activity(), LocationListener {
         val moved = Math.abs(l.latitude - lat) > 0.05 || Math.abs(l.longitude - lng) > 0.05
         lat = l.latitude; lng = l.longitude
         speedTv?.text = if (l.hasSpeed()) "${(l.speed * 3.6f).toInt()}" else "—"
-        if (moved && weatherTv != null) refreshWeather()
+        if (l.hasSpeed()) factory?.onSpeed((l.speed * 3.6f).toInt())
+        if (moved && (weatherTv != null || factory != null)) refreshWeather()
     }
 
     // ---------- dialogs ----------

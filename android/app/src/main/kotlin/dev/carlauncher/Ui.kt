@@ -80,7 +80,10 @@ object Show {
     const val DATE = "show_date"; const val HIJRI = "show_hijri"; const val RAM = "show_ram"; const val APPS = "show_apps"
     const val SPEED = "show_speed"; const val WEATHER = "show_weather"; const val PRAYER = "show_prayer"
     const val MAPS = "show_maps"; const val MEDIA = "show_media"; const val MINI = "mini_stats"
-    fun on(ctx: Context, key: String) = Apps.prefs(ctx).getBoolean(key, true)
+    // The floating Back/Home pill shows just two buttons by default (owner: «زرين بس»); its RAM/CPU readout is opt-in.
+    const val MINI_FLOAT = "mini_stats_float"
+    private val defaultOff = setOf(MINI_FLOAT)
+    fun on(ctx: Context, key: String) = Apps.prefs(ctx).getBoolean(key, key !in defaultOff)
     fun toggle(ctx: Context, key: String) = Apps.prefs(ctx).edit().putBoolean(key, !on(ctx, key)).apply()
 }
 

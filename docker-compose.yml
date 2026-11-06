@@ -10,9 +10,13 @@ services:
     volumes:
       - ./android:/workspace
       - gradle-cache:/root/.gradle
+      # The debug signing key lives in ~/.android — persist it, or every build gets a new key and
+      # `adb install -r` fails with INSTALL_FAILED_UPDATE_INCOMPATIBLE (signatures do not match).
+      - android-home:/root/.android
 
 volumes:
   gradle-cache:
+  android-home:
 
 # Docker address pools on this host are exhausted — pinned free subnet (tadri .20, tadri-explainer .21, futurex-ws .22).
 networks:

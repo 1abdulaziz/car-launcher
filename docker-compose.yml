@@ -1,0 +1,22 @@
+name: car-launcher
+
+services:
+  # Build-only toolchain: `docker compose run --rm android gradle :app:assembleDebug` → android/app/build/outputs/apk/debug/
+  android:
+    build: ./infra/android-sdk
+    image: car-launcher-android-sdk:local
+    restart: "no"
+    working_dir: /workspace
+    volumes:
+      - ./android:/workspace
+      - gradle-cache:/root/.gradle
+
+volumes:
+  gradle-cache:
+
+# Docker address pools on this host are exhausted — pinned free subnet (tadri .20, tadri-explainer .21, futurex-ws .22).
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.252.23.0/24

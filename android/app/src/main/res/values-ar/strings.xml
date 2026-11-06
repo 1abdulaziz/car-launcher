@@ -87,4 +87,11 @@
     <string name="add_window_app">أضف تطبيق لأزرار المربع</string>
     <string name="design_factory">«شكل الوكالة» (التصميم الأول) ✓</string>
     <string name="design_talabak">«طلبك» (التصميم الثاني)</string>
+    <string name="pick_card">اختر هالبطاقة</string>
+    <string name="card_music">الموسيقى (اللي شغّال)</string>
+    <string name="card_clock">الوقت والطقس</string>
+    <string name="card_speed">السرعة</string>
+    <string name="card_prayer">الصلاة الجاية</string>
+    <string name="card_radio">الراديو</string>
+    <string name="card_none">لا شي</string>
 </resources>

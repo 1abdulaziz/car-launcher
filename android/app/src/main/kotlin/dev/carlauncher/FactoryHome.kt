@@ -38,8 +38,6 @@ class FactoryHome(private val a: HomeActivity) {
     private lateinit var srcTv: TextView; private lateinit var titleTv: TextView; private lateinit var playTv: TextView
     private lateinit var speedTv: TextView
     var mapBox: FrameLayout? = null; private set
-    private lateinit var pages: FrameLayout; private lateinit var dots: LinearLayout
-    private var page = 0
 
     // ---------- small helpers (factory sizes — no 24dp floor here) ----------
     private fun tv(s: String, size: Float, color: Int = Color.WHITE, bold: Boolean = false, g: Int = Gravity.CENTER) = TextView(ctx).apply {
@@ -55,15 +53,14 @@ class FactoryHome(private val a: HomeActivity) {
             orientation = LinearLayout.VERTICAL; layoutDirection = View.LAYOUT_DIRECTION_LOCALE
             // Factory background: magenta-purple top fading to deep blue.
             background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(Color.parseColor("#4A1A6E"), Color.parseColor("#2A2378"), Color.parseColor("#141B4A")))
-            setPadding(px(20), px(14), px(20), px(6))
+            // v0.3.0 (owner): slimmer left/right edges so the live window gets nearly the full width.
+            setPadding(px(8), px(12), px(8), px(8))
         }
         root.addView(topApps(), LinearLayout.LayoutParams(-1, px(118)))
         mapBox = mapPanel()
-        root.addView(mapBox, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = px(10) })
-        root.addView(bottomArea(), LinearLayout.LayoutParams(-1, px(340)).apply { topMargin = px(4) })
-        dots = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
-        root.addView(dots, LinearLayout.LayoutParams(-1, px(14)))
-        showPage(0)
+        // v0.3.0: the bottom shrank from two 340px pages to two small chosen cards → the live window grows by ~170px.
+        root.addView(mapBox, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = px(8) })
+        root.addView(bottomCards(), LinearLayout.LayoutParams(-1, px(168)).apply { topMargin = px(8) })
         return root
     }
 
@@ -142,108 +139,102 @@ class FactoryHome(private val a: HomeActivity) {
         return Rect(p[0] + px(2), p[1] + px(2), p[0] + box.width - px(2), p[1] + box.height - px(STRIP))
     }
 
-    // ---------- bottom: two pages, swipe left/right (factory has the same dots) ----------
-    private fun bottomArea(): View {
-        pages = FrameLayout(ctx)
-        pages.addView(page1(), FrameLayout.LayoutParams(-1, -1))
-        pages.addView(page2(), FrameLayout.LayoutParams(-1, -1))
-        val gd = GestureDetector(ctx, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onDown(e: MotionEvent) = true
-            override fun onFling(e1: MotionEvent?, e2: MotionEvent, vx: Float, vy: Float): Boolean {
-                if (Math.abs(vx) < Math.abs(vy)) return false
-                showPage(if (page == 0) 1 else 0); return true
+    // ---------- bottom: two small cards the owner chooses (v0.3.0) ----------
+    // Owner 2026-11-06: «الي تحت عطني خيار أغيّرهم … البلوتوث والراديو مو مهمين … رتّب الوقت والطقس».
+    // Long-press a card → choose: music, clock & weather, speed, next prayer, radio, or nothing. Defaults: clock & weather + music.
+    private var clockBuilt = false; private var musicBuilt = false; private var speedBuilt = false
+    private var prayerName: TextView? = null; private var prayerLeft: TextView? = null
+    private fun bottomCards(): View = LinearLayout(ctx).apply {
+        orientation = LinearLayout.HORIZONTAL
+        BottomCards.slots(ctx).forEachIndexed { i, type ->
+            val card = buildCard(type).apply {
+                setOnLongClickListener { a.pickBottomCard(i); true }
             }
-        })
-        pages.setOnTouchListener { _, ev -> gd.onTouchEvent(ev) }
-        return pages
-    }
-
-    private fun showPage(i: Int) {
-        page = i
-        for (k in 0 until pages.childCount) pages.getChildAt(k).visibility = if (k == i) View.VISIBLE else View.GONE
-        dots.removeAllViews()
-        for (k in 0..1) dots.addView(View(ctx).apply { background = rounded(if (k == i) Color.WHITE else Color.parseColor("#66FFFFFF"), px(3).toFloat()) },
-            LinearLayout.LayoutParams(px(if (k == i) 26 else 18), px(5)).apply { setMargins(px(4), 0, px(4), 0) })
-    }
-
-    private fun page1(): View = FrameLayout(ctx).apply {
-        layoutDirection = View.LAYOUT_DIRECTION_LTR // the factory composition is fixed: music left, radio right
-        // decorative bubbles behind the clock/weather (pink + blue, like the factory)
-        addView(View(ctx).apply { background = circle(intArrayOf(Color.parseColor("#FF4FB0"), Color.parseColor("#B0127A"))) }, fl(px(190), px(190), Gravity.TOP or Gravity.LEFT, l = 360, t = 40))
-        addView(View(ctx).apply { background = circle(intArrayOf(Color.parseColor("#3D8BFF"), Color.parseColor("#1338A8"))) }, fl(px(170), px(170), Gravity.TOP or Gravity.LEFT, l = 535, t = 52))
-        // clock (top-right)
-        val clock = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.TOP }
-        ampmTv = tv("", 16f, Color.WHITE); timeTv = tv("", 58f, Color.WHITE, bold = true)
-        clock.addView(ampmTv, LinearLayout.LayoutParams(-2, -2).apply { topMargin = px(8); rightMargin = px(10) }); clock.addView(timeTv)
-        addView(clock, fl(-2, -2, Gravity.TOP or Gravity.RIGHT, t = 12, r = 6))
-        val dateCol = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.RIGHT }
-        dateTv = tv("", 14f, Color.WHITE, g = Gravity.RIGHT); dayTv = tv("", 14f, Color.WHITE, g = Gravity.RIGHT)
-        dateCol.addView(dateTv); dateCol.addView(dayTv, LinearLayout.LayoutParams(-2, -2).apply { topMargin = px(8) })
-        addView(dateCol, fl(-2, -2, Gravity.TOP or Gravity.RIGHT, t = 84, r = 14))
-        // weather (left of the clock)
-        val weather = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.LEFT }
-        weather.addView(tv("☁", 44f, Color.WHITE, g = Gravity.LEFT))
-        val tRow = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.BOTTOM }
-        val tCol = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
-        condTv = tv("", 13f, Color.WHITE, g = Gravity.LEFT); cityTv = tv("", 13f, Color.WHITE, g = Gravity.LEFT)
-        tCol.addView(condTv); tCol.addView(cityTv, LinearLayout.LayoutParams(-2, -2).apply { topMargin = px(6) })
-        tempTv = tv("—", 34f, Color.WHITE, bold = true)
-        tRow.addView(tCol); tRow.addView(tempTv, LinearLayout.LayoutParams(-2, -2).apply { leftMargin = px(16) })
-        weather.addView(tRow)
-        addView(weather, fl(-2, -2, Gravity.TOP or Gravity.LEFT, l = 372, t = 22))
-
-        // music: vinyl disc + bluetooth badge + card (bottom-left)
-        addView(VinylView(ctx), fl(px(200), px(200), Gravity.TOP or Gravity.LEFT, l = 130, t = 0))
-        val card = LinearLayout(ctx).apply {
-            orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL
-            background = rounded(Color.parseColor("#B32A2F6E"), px(20).toFloat(), px(1), Color.parseColor("#33FFFFFF")); setPadding(px(10), px(54), px(10), px(10))
+            addView(card, LinearLayout.LayoutParams(0, -1, 1f).apply { if (i > 0) marginStart = px(8) })
         }
-        srcTv = tv("", 13f, Color.parseColor("#FF4FB0")); titleTv = tv("", 22f, Color.WHITE).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
-        card.addView(srcTv); card.addView(titleTv, LinearLayout.LayoutParams(-1, -2).apply { topMargin = px(6) })
-        val ctl = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
-        fun k(glyph: String, size: Float, onClick: () -> Unit) = tv(glyph, size, Color.WHITE).apply { setOnClickListener { onClick() }; pressable() }
-        ctl.addView(k("⏮", 26f) { media(KeyEvent.KEYCODE_MEDIA_PREVIOUS) }, LinearLayout.LayoutParams(0, px(56), 1f))
-        playTv = k("⏯", 34f) { media(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) }
-        ctl.addView(playTv, LinearLayout.LayoutParams(0, px(56), 1f))
-        ctl.addView(k("⏭", 26f) { media(KeyEvent.KEYCODE_MEDIA_NEXT) }, LinearLayout.LayoutParams(0, px(56), 1f))
-        card.addView(ctl, LinearLayout.LayoutParams(-1, -2).apply { topMargin = px(14) })
-        card.setOnClickListener { val p = activeController()?.packageName; if (p == null || !Apps.launch(ctx, p)) Apps.launch(ctx, "com.tw.music") }
-        addView(card, fl(px(360), px(196), Gravity.BOTTOM or Gravity.LEFT, b = 6))
-        addView(View(ctx).apply { background = circle(intArrayOf(Color.parseColor("#FF2DB4"), Color.parseColor("#C0137E"))) }, fl(px(58), px(58), Gravity.BOTTOM or Gravity.LEFT, l = 201, b = 173))
-        addView(tv("ᛒ", 30f, Color.WHITE), fl(px(58), px(58), Gravity.BOTTOM or Gravity.LEFT, l = 201, b = 173))
-
-        // radio card (bottom-right) — tap opens the factory radio; frequency display = @TODO (needs com.tw.radio's interface)
-        val radio = FrameLayout(ctx).apply { background = rounded(Color.parseColor("#B3233A86"), px(20).toFloat(), px(1), Color.parseColor("#33FFFFFF")) }
-        radio.addView(View(ctx).apply { background = circle(intArrayOf(Color.parseColor("#3DA0FF"), Color.parseColor("#1B5FD6"))) }, fl(px(60), px(60), Gravity.TOP or Gravity.LEFT, l = 18, t = 22))
-        radio.addView(tv("📻", 26f), fl(px(60), px(60), Gravity.TOP or Gravity.LEFT, l = 18, t = 22))
-        radio.addView(tv("FM", 44f, Color.WHITE, bold = true), fl(-2, -2, Gravity.TOP or Gravity.LEFT, l = 110, t = 22))
-        radio.addView(tv(ctx.s(R.string.radio), 15f, Color.WHITE), fl(-2, -2, Gravity.TOP or Gravity.LEFT, l = 228, t = 32))
-        val rctl = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
-        rctl.addView(k("⏮", 26f) { media(KeyEvent.KEYCODE_MEDIA_PREVIOUS) }, LinearLayout.LayoutParams(0, px(56), 1f))
-        rctl.addView(k("◉", 30f) { Apps.launch(ctx, "com.tw.radio") }, LinearLayout.LayoutParams(0, px(56), 1f))
-        rctl.addView(k("⏭", 26f) { media(KeyEvent.KEYCODE_MEDIA_NEXT) }, LinearLayout.LayoutParams(0, px(56), 1f))
-        radio.addView(rctl, fl(-1, -2, Gravity.BOTTOM, b = 10))
-        radio.setOnClickListener { Apps.launch(ctx, "com.tw.radio") }
-        addView(radio, fl(px(330), px(178), Gravity.BOTTOM or Gravity.RIGHT, b = 6))
     }
 
-    // page 2: the car + speed (factory page 2). Speed in km/h (the factory showed mph).
-    private fun page2(): View = FrameLayout(ctx).apply {
-        addView(CarView(ctx), fl(-1, px(230), Gravity.BOTTOM or Gravity.LEFT, b = 0))
-        val sp = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; layoutDirection = View.LAYOUT_DIRECTION_LTR }
-        speedTv = tv("0", 64f, Color.WHITE, bold = true)
-        sp.addView(speedTv); sp.addView(tv(ctx.s(R.string.kmh), 20f, Color.WHITE), LinearLayout.LayoutParams(-2, -2).apply { leftMargin = px(12) })
-        addView(sp, fl(-2, -2, Gravity.TOP or Gravity.RIGHT, t = 30, r = 30))
+    private fun shell(): FrameLayout = FrameLayout(ctx).apply {
+        background = rounded(Color.parseColor("#B32A2F6E"), px(20).toFloat(), px(1), Color.parseColor("#33FFFFFF"))
+        setPadding(px(16), px(12), px(16), px(10))
+    }
+
+    private fun buildCard(type: String): FrameLayout = shell().apply {
+        when (type) {
+            BottomCards.CLOCK -> {
+                clockBuilt = true
+                // Time + date on one side, weather on the other — one clean card instead of overlapping bubbles.
+                val row = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+                val left = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
+                val tr = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.BOTTOM; layoutDirection = View.LAYOUT_DIRECTION_LTR }
+                timeTv = tv("", 46f, Color.WHITE, bold = true); ampmTv = tv("", 15f, Color.WHITE)
+                tr.addView(timeTv); tr.addView(ampmTv, LinearLayout.LayoutParams(-2, -2).apply { leftMargin = px(6); bottomMargin = px(8) })
+                dayTv = tv("", 15f, Color.parseColor("#D9FFFFFF"), g = Gravity.START); dateTv = tv("", 14f, Color.parseColor("#99FFFFFF"), g = Gravity.START)
+                left.addView(tr); left.addView(dayTv, LinearLayout.LayoutParams(-2, -2).apply { topMargin = px(4) }); left.addView(dateTv)
+                row.addView(left, LinearLayout.LayoutParams(0, -2, 1f))
+                val w = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL }
+                val wr = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; layoutDirection = View.LAYOUT_DIRECTION_LTR }
+                wr.addView(tv("☁", 30f, Color.WHITE)); tempTv = tv("—", 32f, Color.WHITE, bold = true); wr.addView(tempTv, LinearLayout.LayoutParams(-2, -2).apply { leftMargin = px(6) })
+                condTv = tv("", 13f, Color.parseColor("#D9FFFFFF")); cityTv = tv("", 13f, Color.parseColor("#99FFFFFF"))
+                w.addView(wr); w.addView(condTv); w.addView(cityTv)
+                row.addView(w)
+                addView(row, fl(-1, -1, Gravity.CENTER))
+            }
+            BottomCards.MUSIC -> {
+                musicBuilt = true
+                val col = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL }
+                srcTv = tv("", 13f, Color.parseColor("#FF4FB0")); titleTv = tv("", 20f, Color.WHITE).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
+                col.addView(srcTv); col.addView(titleTv, LinearLayout.LayoutParams(-1, -2).apply { topMargin = px(4) })
+                val ctl = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; layoutDirection = View.LAYOUT_DIRECTION_LTR }
+                fun k(glyph: String, size: Float, onClick: () -> Unit) = tv(glyph, size, Color.WHITE).apply { setOnClickListener { onClick() }; pressable() }
+                ctl.addView(k("⏮", 26f) { media(KeyEvent.KEYCODE_MEDIA_PREVIOUS) }, LinearLayout.LayoutParams(0, px(58), 1f))
+                playTv = k("⏯", 34f) { media(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) }
+                ctl.addView(playTv, LinearLayout.LayoutParams(0, px(58), 1f))
+                ctl.addView(k("⏭", 26f) { media(KeyEvent.KEYCODE_MEDIA_NEXT) }, LinearLayout.LayoutParams(0, px(58), 1f))
+                col.addView(ctl, LinearLayout.LayoutParams(-1, -2).apply { topMargin = px(10) })
+                setOnClickListener { val p = activeController()?.packageName; if (p == null || !Apps.launch(ctx, p)) Apps.launch(ctx, "com.tw.music") }
+                addView(col, fl(-1, -1, Gravity.CENTER))
+            }
+            BottomCards.SPEED -> {
+                speedBuilt = true
+                val r = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; layoutDirection = View.LAYOUT_DIRECTION_LTR }
+                speedTv = tv("0", 60f, Color.WHITE, bold = true); r.addView(speedTv)
+                r.addView(tv(ctx.s(R.string.kmh), 18f, Color.WHITE), LinearLayout.LayoutParams(-2, -2).apply { leftMargin = px(10) })
+                addView(r, fl(-1, -1, Gravity.CENTER))
+            }
+            BottomCards.PRAYER -> {
+                val col = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
+                col.addView(tv(ctx.s(R.string.next_prayer), 14f, Color.parseColor("#B3FFFFFF")))
+                prayerName = tv("—", 34f, Color.WHITE, bold = true); prayerLeft = tv("", 16f, Color.parseColor("#7FD3FF"))
+                col.addView(prayerName); col.addView(prayerLeft)
+                addView(col, fl(-1, -1, Gravity.CENTER))
+            }
+            BottomCards.RADIO -> {
+                val col = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
+                col.addView(tv("📻  FM", 34f, Color.WHITE, bold = true)); col.addView(tv(ctx.s(R.string.radio), 15f, Color.parseColor("#B3FFFFFF")))
+                setOnClickListener { Apps.launch(ctx, "com.tw.radio") }
+                addView(col, fl(-1, -1, Gravity.CENTER))
+            }
+            else -> { // nothing
+                background = rounded(Color.parseColor("#1AFFFFFF"), px(20).toFloat())
+                addView(tv("+", 30f, Color.parseColor("#80FFFFFF")), fl(-1, -1, Gravity.CENTER))
+                setOnClickListener { a.pickBottomCard(BottomCards.slots(ctx).indexOf(BottomCards.NONE)) }
+            }
+        }
     }
 
     // ---------- live data ----------
-    fun tick(isArabic: Boolean) {
+    fun tick(isArabic: Boolean, lat: Double, lng: Double) {
         val c = Calendar.getInstance()
+        prayerName?.let { pn -> val (p, left) = Prayer.next(lat, lng); pn.text = ctx.s(p.name); prayerLeft?.text = ctx.s(R.string.in_time, "${left / 60}:${"%02d".format(left % 60)}") }
+        if (clockBuilt) {
         val h = c.get(Calendar.HOUR).let { if (it == 0) 12 else it }
         timeTv.text = "%d:%02d".format(h, c.get(Calendar.MINUTE))
         ampmTv.text = if (c.get(Calendar.AM_PM) == Calendar.AM) "AM" else "PM"
         dateTv.text = "%04d-%02d-%02d".format(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH))
         dayTv.text = android.icu.text.SimpleDateFormat("EEEE", android.icu.util.ULocale(if (isArabic) "ar" else "en")).format(c.time)
+        }
+        if (!musicBuilt) return
         val m = activeController()
         val md = m?.metadata
         val title = md?.getString(MediaMetadata.METADATA_KEY_TITLE)
@@ -252,8 +243,8 @@ class FactoryHome(private val a: HomeActivity) {
         playTv.text = if (m?.playbackState?.state == PlaybackState.STATE_PLAYING) "⏸" else "⏯"
     }
 
-    fun onSpeed(kmh: Int) { speedTv.text = "$kmh" }
-    fun onWeather(temp: Int, cond: String, city: String?) { tempTv.text = "$temp°"; condTv.text = cond; cityTv.text = city?.let { "⦿ $it" } ?: "" }
+    fun onSpeed(kmh: Int) { if (speedBuilt) speedTv.text = "$kmh" }
+    fun onWeather(temp: Int, cond: String, city: String?) { if (!clockBuilt) return; tempTv.text = "$temp°"; condTv.text = cond; cityTv.text = city?.let { "⦿ $it" } ?: "" }
 
     /** The currently playing media app (needs notification-listener access; null if not granted / nothing playing). */
     private fun activeController(): MediaController? = runCatching {
@@ -325,4 +316,17 @@ object WindowApps {
     fun list(ctx: Context): List<String> = (Apps.prefs(ctx).getString(KEY, null) ?: "com.google.android.apps.maps|com.google.android.youtube").split("|").filter { it.isNotEmpty() }
     fun add(ctx: Context, pkg: String) { val l = list(ctx); if (pkg !in l) Apps.prefs(ctx).edit().putString(KEY, (l + pkg).joinToString("|")).apply() }
     fun remove(ctx: Context, pkg: String) = Apps.prefs(ctx).edit().putString(KEY, list(ctx).filter { it != pkg }.joinToString("|")).apply()
+}
+
+/** The two bottom cards (v0.3.0). Owner picks each by long-press. */
+object BottomCards {
+    const val MUSIC = "music"; const val CLOCK = "clock"; const val SPEED = "speed"; const val PRAYER = "prayer"; const val RADIO = "radio"; const val NONE = "none"
+    val ALL = listOf(CLOCK, MUSIC, SPEED, PRAYER, RADIO, NONE)
+    private const val KEY = "bottom_cards"
+    fun slots(ctx: Context): List<String> = (Apps.prefs(ctx).getString(KEY, null) ?: "$CLOCK|$MUSIC").split("|")
+    fun set(ctx: Context, i: Int, type: String) { val l = slots(ctx).toMutableList(); if (i in l.indices) l[i] = type; Apps.prefs(ctx).edit().putString(KEY, l.joinToString("|")).apply() }
+    fun label(type: String): Int = when (type) {
+        MUSIC -> R.string.card_music; CLOCK -> R.string.card_clock; SPEED -> R.string.card_speed
+        PRAYER -> R.string.card_prayer; RADIO -> R.string.card_radio; else -> R.string.card_none
+    }
 }

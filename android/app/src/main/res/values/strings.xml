@@ -90,4 +90,11 @@
     <string name="add_window_app">Add an app to the window switcher</string>
     <string name="design_factory">«Factory look» (design 1) ✓</string>
     <string name="design_talabak">«Talabak» (design 2)</string>
+    <string name="pick_card">Choose this card</string>
+    <string name="card_music">Music (now playing)</string>
+    <string name="card_clock">Clock &amp; weather</string>
+    <string name="card_speed">Speed</string>
+    <string name="card_prayer">Next prayer</string>
+    <string name="card_radio">Radio</string>
+    <string name="card_none">Nothing</string>
 </resources>

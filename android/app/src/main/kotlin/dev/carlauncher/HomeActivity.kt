@@ -92,6 +92,17 @@ class HomeActivity : Activity(), LocationListener {
         d.show()
     }
     fun pickPanelPublic(slot: String) = pickPanel(slot)
+    fun pickBottomCard(slot: Int) {
+        if (slot < 0) return
+        lateinit var d: Dialog
+        val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        BottomCards.ALL.forEach { type ->
+            body.addView(text(s(BottomCards.label(type)), 26f, Pal.TEXT).apply {
+                setPadding(dp(8), dp(14), dp(8), dp(14)); setOnClickListener { BottomCards.set(this@HomeActivity, slot, type); d.dismiss(); render() }; pressable()
+            })
+        }
+        d = sheet(s(R.string.pick_card), body); d.show()
+    }
     fun addWindowApp() {
         lateinit var d: Dialog
         d = sheet(s(R.string.add_window_app), appGrid { a -> WindowApps.add(this, a.pkg); Panels.set(this, Panels.TOP, a.pkg); d.dismiss(); render() })
@@ -236,7 +247,7 @@ class HomeActivity : Activity(), LocationListener {
     private val tick = object : Runnable {
         override fun run() {
             factory?.let { f ->
-                f.tick(isArabic())
+                f.tick(isArabic(), lat, lng)
                 if (System.currentTimeMillis() - lastWeatherAt > 30 * 60_000) refreshWeather()
                 ui.postDelayed(this, 2000); return
             }

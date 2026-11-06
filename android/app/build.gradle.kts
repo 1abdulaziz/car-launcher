@@ -11,8 +11,8 @@ android {
         // His unit is Android 12 (SP1A.210812.016) — API 31.
         minSdk = 31
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = 4
+        versionName = "0.3.1"
     }
 
     buildTypes {

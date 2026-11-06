@@ -94,4 +94,5 @@
     <string name="card_prayer">الصلاة الجاية</string>
     <string name="card_radio">الراديو</string>
     <string name="card_none">لا شي</string>
+    <string name="float_autohide">إخفاء الرجوع والرئيسية إذا ما لمست الشاشة</string>
 </resources>

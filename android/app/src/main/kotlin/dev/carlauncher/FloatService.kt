@@ -81,7 +81,8 @@ class FloatService : AccessibilityService() {
             if (mini) { val r = Stats.ram(this); val c = Stats.cpuPct(); stats?.text = if (c != null) s(R.string.ram_cpu_pill, r.usedPct, c) else s(R.string.ram_pill, r.usedPct) }
             stats?.visibility = if (mini) View.VISIBLE else View.GONE
             if (p.visibility != View.VISIBLE) { p.alpha = 0f; p.visibility = View.VISIBLE; p.animate().alpha(1f).setDuration(150).start() }
-            ui.postDelayed(hideRun, SHOW_MS)
+            // v0.3.1 (owner): «الرجوع مختفي — حطه ثابت دائم». Auto-hide is now OFF by default (Settings can turn it back on).
+            if (Show.on(this, Show.FLOAT_AUTOHIDE)) ui.postDelayed(hideRun, SHOW_MS)
         } else {
             p.animate().alpha(0f).setDuration(250).withEndAction { p.visibility = View.GONE }.start()
         }

@@ -12,6 +12,10 @@
     <!-- Recently used apps for the memory page; granted via `appops set dev.carlauncher GET_USAGE_STATS allow`. -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
     <!-- A launcher must see every installed app. -->
+    <!-- Re-enable our floating Back/Home after each car start (the unit clears accessibility services on boot).
+         Granted once over ADB: pm grant dev.carlauncher android.permission.WRITE_SECURE_SETTINGS -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
 
     <application
@@ -38,6 +42,14 @@
 
         <activity android:name=".RamActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".SettingsActivity" android:exported="false" android:screenOrientation="portrait" />
+
+        <receiver android:name=".BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Media sessions of other apps (now-playing on the music card). Granted once: cmd notification allow_listener. -->
         <service

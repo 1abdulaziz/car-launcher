@@ -53,6 +53,7 @@ class HomeActivity : Activity(), LocationListener {
         super.onCreate(b)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         builtLang = Lang.code(this)
+        KeepAlive.ensureFloat(this)
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
     }

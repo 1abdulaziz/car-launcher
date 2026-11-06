@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.ActivityOptions
 import android.content.Intent
 import android.graphics.Rect
+import android.util.Log
 
 /**
  * Runs a REAL app live inside a launcher panel — the factory launcher's technique (measured on his unit: its Google Maps task
@@ -22,8 +23,11 @@ object LiveWindow {
         val i = act.packageManager.getLaunchIntentForPackage(pkg) ?: return false
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val o = ActivityOptions.makeBasic().setLaunchBounds(bounds)
+        // Diagnostics (v0.3.2): the first on-device try opened the app full-screen — log whether the hidden call even works.
         runCatching { ActivityOptions::class.java.getMethod("setLaunchWindowingMode", Int::class.javaPrimitiveType).invoke(o, WINDOWING_MODE_FREEFORM) }
-        return runCatching { act.startActivity(i, o.toBundle()); true }.getOrDefault(false)
+            .onSuccess { Log.i("CarLauncher", "LiveWindow: freeform requested for $pkg at $bounds") }
+            .onFailure { Log.w("CarLauncher", "LiveWindow: setLaunchWindowingMode unavailable: $it") }
+        return runCatching { act.startActivity(i, o.toBundle()); true }.onFailure { Log.w("CarLauncher", "LiveWindow: start failed: $it") }.getOrDefault(false)
     }
 
     /** «تكبير»: the same app full-screen (windowing mode 1 = FULLSCREEN), so the owner can use it big. */

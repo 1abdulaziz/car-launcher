@@ -73,8 +73,9 @@ class HomeActivity : Activity(), LocationListener {
         if (design() == "factory") {
             factory = FactoryHome(this).also { setContentView(it.build()) }
             showWeather()
-            // Start the window app live once the box has its final size.
-            window.decorView.postDelayed({ launchLive() }, 600)
+            // NO auto-launch (v0.3.3, owner: «يفتح على طول كأنه أوتو أوبن»): on his unit the platform refuses freeform for a
+            // normal app (verified: request made, app still opened full-screen — even with enable_freeform_support=1 + reboot),
+            // so auto-launching just covered the home screen. The app opens only when the owner taps the window box.
         } else { factory = null; setContentView(build()); renderTiles(); showWeather() }
     }
 

@@ -1,0 +1,12 @@
+# Android / Gradle build output (built inside Docker; never on the host)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.kotlin/
+*.apk
+*.aab
+.idea/
+*.iml
+.DS_Store
+.env

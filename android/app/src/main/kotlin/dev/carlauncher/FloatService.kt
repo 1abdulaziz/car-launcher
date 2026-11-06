@@ -2,6 +2,7 @@ package dev.carlauncher
 
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.Handler
@@ -23,6 +24,8 @@ import android.widget.TextView
  */
 class FloatService : AccessibilityService() {
     companion object { @Volatile var running = false }
+
+    override fun attachBaseContext(base: Context) = super.attachBaseContext(Lang.wrap(base))
 
     private val ui = Handler(Looper.getMainLooper())
     private var pill: LinearLayout? = null; private var stats: TextView? = null
@@ -49,8 +52,9 @@ class FloatService : AccessibilityService() {
             setTextColor(if (light) Color.BLACK else Color.WHITE); background = rounded(if (light) Color.WHITE else Color.parseColor("#26304D"), dp(28).toFloat())
             setOnClickListener { performGlobalAction(action) }
         }
-        addView(btn("›", "رجوع", true, GLOBAL_ACTION_BACK), LinearLayout.LayoutParams(dp(56), dp(56)))
-        addView(btn("⌂", "الرئيسية", false, GLOBAL_ACTION_HOME), LinearLayout.LayoutParams(dp(56), dp(56)).apply { leftMargin = dp(6) })
+        val rtl = resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
+        addView(btn(if (rtl) "›" else "‹", s(R.string.back), true, GLOBAL_ACTION_BACK), LinearLayout.LayoutParams(dp(56), dp(56)))
+        addView(btn("⌂", s(R.string.home), false, GLOBAL_ACTION_HOME), LinearLayout.LayoutParams(dp(56), dp(56)).apply { leftMargin = dp(6) })
         stats = TextView(context).apply { textSize = 22f; setTextColor(Pal.SUB); setPadding(dp(10), 0, dp(4), 0) }
         addView(stats)
         val grip = TextView(context).apply { text = "⋮"; textSize = 30f; setTextColor(Pal.DIM); setPadding(dp(8), 0, dp(4), 0) }
@@ -72,7 +76,7 @@ class FloatService : AccessibilityService() {
             val on = Apps.prefs(this@FloatService).getBoolean("mini_stats", true)
             if (on && p.visibility == View.VISIBLE) {
                 val r = Stats.ram(this@FloatService); val c = Stats.cpuPct()
-                stats?.text = if (c != null) "رام ${r.usedPct}% · معالج $c%" else "رام ${r.usedPct}%"
+                stats?.text = if (c != null) s(R.string.ram_cpu_pill, r.usedPct, c) else s(R.string.ram_pill, r.usedPct)
                 stats?.visibility = View.VISIBLE
             } else stats?.visibility = View.GONE
             ui.postDelayed(this, 2000)

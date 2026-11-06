@@ -62,3 +62,26 @@ fun View.pressable(): View = apply {
         false
     }
 }
+
+// ---------- language + display settings ----------
+// Language: «system» follows the unit's language; «ar» / «en» override it for this app only (owner 2026-11-06: support both).
+object Lang {
+    fun code(ctx: Context): String = Apps.prefs(ctx).getString("lang", "system") ?: "system"
+    fun wrap(base: Context): Context {
+        val c = code(base); if (c == "system") return base
+        val loc = java.util.Locale(c)
+        val cfg = android.content.res.Configuration(base.resources.configuration).apply { setLocale(loc); setLayoutDirection(loc) }
+        return base.createConfigurationContext(cfg)
+    }
+}
+
+// Everything on the home screen can be shown/hidden (owner 2026-11-06: «خيارات إعدادات تتحكم بكل شي معروض»). Default: all on.
+object Show {
+    const val DATE = "show_date"; const val HIJRI = "show_hijri"; const val RAM = "show_ram"; const val APPS = "show_apps"
+    const val SPEED = "show_speed"; const val WEATHER = "show_weather"; const val PRAYER = "show_prayer"
+    const val MAPS = "show_maps"; const val MEDIA = "show_media"; const val MINI = "mini_stats"
+    fun on(ctx: Context, key: String) = Apps.prefs(ctx).getBoolean(key, true)
+    fun toggle(ctx: Context, key: String) = Apps.prefs(ctx).edit().putBoolean(key, !on(ctx, key)).apply()
+}
+
+fun Context.s(id: Int, vararg args: Any): String = if (args.isEmpty()) getString(id) else getString(id, *args)

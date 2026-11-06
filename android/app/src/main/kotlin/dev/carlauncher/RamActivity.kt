@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.ActivityManager
 import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -30,16 +31,19 @@ class RamActivity : Activity() {
     private val protectedPrefixes = listOf("com.tw.", "com.dofun.carsetting", "com.google.android.gms", "com.android.systemui", "com.android.phone",
         "android", "com.android.inputmethod", "com.google.android.inputmethod", "dev.carlauncher")
 
+    override fun attachBaseContext(base: Context) = super.attachBaseContext(Lang.wrap(base))
+
     override fun onCreate(b: Bundle?) {
         super.onCreate(b); requestWindowFeature(Window.FEATURE_NO_TITLE)
         val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL; layoutDirection = View.LAYOUT_DIRECTION_RTL
+            orientation = LinearLayout.VERTICAL; layoutDirection = View.LAYOUT_DIRECTION_LOCALE
             background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(Pal.BG_TOP, Pal.BG_BOTTOM)); setPadding(dp(16), dp(12), dp(16), dp(12))
         }
         val head = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        head.addView(text("الذاكرة والسرعة", 36f, Pal.TEXT, bold = true), lp(0, -2, 1f))
+        head.addView(text(s(R.string.mem_title), 36f, Pal.TEXT, bold = true), lp(0, -2, 1f))
+        val rtl = resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
         // The fixed «رجوع» pill — same place as everywhere.
-        head.addView(text("رجوع ›", 28f, Color.BLACK, bold = true, gravity = Gravity.CENTER).apply { background = rounded(Color.WHITE, dp(30).toFloat()); setOnClickListener { finish() }; pressable() }, lp(dp(150), dp(60)))
+        head.addView(text(if (rtl) "${s(R.string.back)} ›" else "‹ ${s(R.string.back)}", 28f, Color.BLACK, bold = true, gravity = Gravity.CENTER).apply { background = rounded(Color.WHITE, dp(30).toFloat()); setOnClickListener { finish() }; pressable() }, lp(dp(170), dp(60)))
         root.addView(head)
 
         val sumCard = card()
@@ -48,7 +52,7 @@ class RamActivity : Activity() {
         sumCard.addView(bar, lp(-1, dp(20)).apply { topMargin = dp(12) })
         root.addView(sumCard, lp(-1, -2).apply { topMargin = dp(12) })
 
-        root.addView(text("أوقف كل اللي بالخلفية", 30f, Color.BLACK, bold = true, gravity = Gravity.CENTER).apply {
+        root.addView(text(s(R.string.stop_all), 30f, Color.BLACK, bold = true, gravity = Gravity.CENTER).apply {
             background = rounded(Pal.ACCENT, dp(24).toFloat()); setOnClickListener { stop(recent()) }; pressable()
         }, lp(-1, dp(80)).apply { topMargin = dp(12) })
         result = text("", SP_MIN, Pal.GOOD).apply { visibility = View.GONE }
@@ -79,15 +83,15 @@ class RamActivity : Activity() {
 
     private fun render() {
         val r = Stats.ram(this)
-        summary.text = "مستخدم ${"%.1f".format((r.totalMb - r.availMb) / 1024.0)} من ${"%.1f".format(r.totalMb / 1024.0)} جيجا · فاضي ${"%.1f".format(r.availMb / 1024.0)}"
+        summary.text = s(R.string.mem_summary, "%.1f".format((r.totalMb - r.availMb) / 1024.0), "%.1f".format(r.totalMb / 1024.0), "%.1f".format(r.availMb / 1024.0))
         bar.removeAllViews()
         bar.addView(View(this).apply { background = rounded(if (r.usedPct < 70) Pal.ACCENT else Pal.WARN, dp(10).toFloat()) }, LinearLayout.LayoutParams(0, -1, r.usedPct.toFloat()))
         bar.addView(View(this), LinearLayout.LayoutParams(0, -1, (100 - r.usedPct).toFloat()))
         list.removeAllViews()
         if (!hasUsageAccess()) {
             list.addView(card().apply {
-                addView(text("أحتاج إذن «الوصول لبيانات الاستخدام» عشان أعرف وش شغّال", 28f, Pal.TEXT))
-                addView(text("اضغط هنا وفعّل «لانشر السيارة»", SP_MIN, Pal.ACCENT)); setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }; pressable()
+                addView(text(s(R.string.usage_needed), 28f, Pal.TEXT))
+                addView(text(s(R.string.usage_tap), SP_MIN, Pal.ACCENT)); setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }; pressable()
             }); return
         }
         val now = System.currentTimeMillis()
@@ -97,9 +101,9 @@ class RamActivity : Activity() {
             row.addView(ImageView(this).apply { setImageDrawable(e.icon) }, lp(dp(56), dp(56)))
             val info = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), 0, dp(12), 0) }
             val mins = ((now - last) / 60_000).toInt()
-            info.addView(text(e.label, 28f, Pal.TEXT, bold = true)); info.addView(text(if (mins < 60) "آخر استخدام قبل $mins دقيقة" else "آخر استخدام قبل ${mins / 60} ساعة", SP_MIN, Pal.DIM))
+            info.addView(text(e.label, 28f, Pal.TEXT, bold = true)); info.addView(text(if (mins < 60) s(R.string.last_used_min, mins) else s(R.string.last_used_h, mins / 60), SP_MIN, Pal.DIM))
             row.addView(info, lp(0, -2, 1f))
-            row.addView(text("إيقاف", 26f, Pal.DANGER, gravity = Gravity.CENTER).apply {
+            row.addView(text(s(R.string.stop), 26f, Pal.DANGER, gravity = Gravity.CENTER).apply {
                 background = rounded(Color.parseColor("#3A1B26"), dp(28).toFloat(), dp(1), Color.parseColor("#7A2E44")); setOnClickListener { stop(listOf(pkg to last)) }; pressable()
             }, lp(dp(120), dp(64)))
             list.addView(row, lp(-1, -2).apply { bottomMargin = dp(10) })
@@ -114,8 +118,7 @@ class RamActivity : Activity() {
         ui.postDelayed({
             val freed = (Stats.ram(this).availMb - before).coerceAtLeast(0)
             result.visibility = View.VISIBLE
-            result.text = if (apps.isEmpty()) "ما فيه شي بالخلفية أوقفه" else
-                "أوقفنا ${apps.size} · وفّرنا $freed ميجا — التطبيق اللي قدامك وتطبيقات السيارة ما نلمسها"
+            result.text = if (apps.isEmpty()) s(R.string.nothing_bg) else s(R.string.stopped_result, apps.size, freed.toInt())
             render()
         }, 800)
     }

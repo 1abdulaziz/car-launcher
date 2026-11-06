@@ -55,3 +55,11 @@ object Apps {
 
     fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, 0)
 }
+
+// The two big panels' apps (top = Google Maps, bottom = YouTube by default). Any installed app can go in either.
+object Panels {
+    const val TOP = "panel_top"; const val BOTTOM = "panel_bottom"
+    private val defaults = mapOf(TOP to "com.google.android.apps.maps", BOTTOM to "com.google.android.youtube")
+    fun get(ctx: android.content.Context, slot: String): String? = Apps.prefs(ctx).getString(slot, defaults[slot])
+    fun set(ctx: android.content.Context, slot: String, pkg: String) = Apps.prefs(ctx).edit().putString(slot, pkg).apply()
+}

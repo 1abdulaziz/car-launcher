@@ -7,7 +7,7 @@ import kotlin.math.*
 // On-device prayer times, Umm al-Qura method (Saudi official): Fajr 18.5°, Isha = Maghrib + 90 min, Asr = shadow factor 1.
 // Algorithm after praytimes.org (sun declination + equation of time). No network needed.
 object Prayer {
-    data class Time(val name: String, val minutes: Int) // minutes after local midnight
+    data class Time(val name: Int, val minutes: Int) // name = string resource id; minutes after local midnight
 
     private fun dsin(d: Double) = sin(Math.toRadians(d)); private fun dcos(d: Double) = cos(Math.toRadians(d))
     private fun dtan(d: Double) = tan(Math.toRadians(d))
@@ -39,7 +39,7 @@ object Prayer {
         val fajr = angleTime(18.5, 5.0, true); val dhuhr = noon(12.0); val asr = asr(13.0)
         val maghrib = angleTime(0.833, 18.0, false); val isha = maghrib + 1.5
         fun toMin(h: Double) = ((h + tz - lng / 15) * 60).roundToInt().mod(1440)
-        return listOf(Time("الفجر", toMin(fajr)), Time("الظهر", toMin(dhuhr)), Time("العصر", toMin(asr)), Time("المغرب", toMin(maghrib)), Time("العشاء", toMin(isha)))
+        return listOf(Time(R.string.fajr, toMin(fajr)), Time(R.string.dhuhr, toMin(dhuhr)), Time(R.string.asr, toMin(asr)), Time(R.string.maghrib, toMin(maghrib)), Time(R.string.isha, toMin(isha)))
     }
 
     /** Next prayer and minutes left (wraps to tomorrow's Fajr). */

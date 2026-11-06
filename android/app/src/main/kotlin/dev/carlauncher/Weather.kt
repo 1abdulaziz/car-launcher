@@ -17,10 +17,10 @@ object Weather {
             d.getJSONArray("temperature_2m_max").getDouble(0).toInt(), d.getJSONArray("temperature_2m_min").getDouble(0).toInt())
     }.getOrNull()
 
-    // WMO weather codes → short Arabic.
-    fun label(code: Int): String = when (code) {
-        0 -> "صحو"; 1, 2 -> "غائم جزئياً"; 3 -> "غائم"; 45, 48 -> "ضباب"
-        in 51..67 -> "مطر"; in 71..77 -> "ثلج"; in 80..82 -> "زخات"; in 95..99 -> "عاصفة رعدية"
-        else -> "—"
+    // WMO weather codes → string resource (Arabic/English).
+    fun label(code: Int): Int = when (code) {
+        0 -> R.string.w_clear; 1, 2 -> R.string.w_partly; 3 -> R.string.w_cloudy; 45, 48 -> R.string.w_fog
+        in 51..67 -> R.string.w_rain; in 71..77 -> R.string.w_snow; in 80..82 -> R.string.w_showers; in 95..99 -> R.string.w_storm
+        else -> R.string.w_unknown
     }
 }

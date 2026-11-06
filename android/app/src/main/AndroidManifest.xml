@@ -37,6 +37,7 @@
         </activity>
 
         <activity android:name=".RamActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".SettingsActivity" android:exported="false" android:screenOrientation="portrait" />
 
         <!-- Floating «رجوع/الرئيسية» + mini RAM/CPU over other apps. Enabled once over ADB (settings secure enabled_accessibility_services). -->
         <service

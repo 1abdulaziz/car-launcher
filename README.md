@@ -28,7 +28,8 @@ is the first.
 docker compose build android
 docker compose run --rm android gradle :app:assembleDebug
 ```
-The APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`.
+The APKs are written to `android/app/build/outputs/apk/debug/app-debug.apk` and
+`android/barhelper/build/outputs/apk/debug/barhelper-debug.apk` (`gradle assembleDebug` builds both).
 Toolchain: AGP 9.5.0 (built-in Kotlin), Gradle 9.6.0, JDK 17, build-tools 36.0.0.
 
 ## Install on the unit (wireless ADB)
@@ -61,6 +62,18 @@ A faithful copy of the head unit's factory (Dofun) home screen, drawn with our o
   - music card (now playing from any app's media session) + clock and weather + radio card
   - the car + speed
 - «Talabak» stays selectable as design 2 (Settings → Design).
+
+## v0.4.0 — companion mode + climate-bar helper
+The factory (Dofun) launcher stays the home screen; Car Launcher adds the always-visible floating Back/Home and
+**keeps the factory climate bar hidden across car starts** (Settings → «Hide the climate bar», on by default).
+
+The unit resets the bar (System `show_navigationbar`) to shown on every boot, and Android refuses that non-public
+key to apps targeting API ≥ 23. So a second, tiny APK — **bar helper** (`dev.carlauncher.barhelper`, targetSdk 22,
+no screen) — writes it: on boot (re-checked for ~50 s) and whenever Car Launcher asks. Install it next to the app:
+```bash
+adb install -r barhelper-debug.apk
+```
+Android 12 still installs targetSdk-22 apps; Android 14+ would refuse it.
 
 ## Roadmap
 - **Phase 2:**

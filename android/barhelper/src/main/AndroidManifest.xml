@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Auto-granted to targetSdk 22 apps (protection level appop|pre23). -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- No activity on purpose: nothing to open, and no "built for an older Android" dialog. -->
+    <application android:label="Car Launcher bar helper" android:allowBackup="false">
+        <receiver android:name=".BarReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <!-- Sent by dev.carlauncher (Settings toggle, FloatService start) with extra "hide". -->
+                <action android:name="dev.carlauncher.barhelper.APPLY" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

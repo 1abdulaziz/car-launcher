@@ -6,4 +6,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "car-launcher"
-include(":app")
+include(":app", ":barhelper")

@@ -71,6 +71,11 @@ class SettingsActivity : Activity() {
         row(s(if (FloatService.running) R.string.float_on else R.string.float_off)) { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
         val auto = Show.on(this, Show.FLOAT_AUTOHIDE)
         row(s(R.string.float_autohide), s(if (auto) R.string.on else R.string.off), auto) { Show.toggle(this, Show.FLOAT_AUTOHIDE); setContentView(build()) }
+        val hideBar = Show.on(this, Show.HIDE_BAR)
+        val helper = KeepAlive.hasBarHelper(this)
+        row(s(R.string.hide_bar), s(if (!helper) R.string.bar_helper_missing else if (hideBar) R.string.on else R.string.off), helper && hideBar) {
+            Show.toggle(this, Show.HIDE_BAR); KeepAlive.ensureBar(this); setContentView(build())
+        }
         val mini = Show.on(this, Show.MINI_FLOAT)
         row(s(R.string.mini_stats), s(if (mini) R.string.on else R.string.off), mini) { Show.toggle(this, Show.MINI_FLOAT); setContentView(build()) }
 

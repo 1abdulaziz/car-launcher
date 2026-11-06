@@ -23,8 +23,21 @@ object KeepAlive {
             Log.i("CarLauncher", "re-enabled floating Back/Home (was: '$cur')")
         }
     }.onFailure { Log.w("CarLauncher", "cannot re-enable floating Back/Home — grant WRITE_SECURE_SETTINGS over ADB", it) }
+
+    /**
+     * The climate bar (System `show_navigationbar`) can't be written from this app: Android rejects non-public System
+     * keys for targetSdk ≥ 23 (tested 2026-11-06). The separate dev.carlauncher.barhelper APK targets 22 and does it;
+     * we just tell it the wanted state. FLAG_INCLUDE_STOPPED_PACKAGES because the helper has no activity and is never "opened".
+     */
+    private const val HELPER = "dev.carlauncher.barhelper"
+    fun hasBarHelper(ctx: Context) = runCatching { ctx.packageManager.getPackageInfo(HELPER, 0) }.isSuccess
+    fun ensureBar(ctx: Context) {
+        if (!hasBarHelper(ctx)) return
+        ctx.sendBroadcast(Intent("$HELPER.APPLY").setClassName(HELPER, "$HELPER.BarReceiver")
+            .addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES).putExtra("hide", Show.on(ctx, Show.HIDE_BAR)))
+    }
 }
 
 class BootReceiver : BroadcastReceiver() {
-    override fun onReceive(ctx: Context, i: Intent) { KeepAlive.ensureFloat(ctx) }
+    override fun onReceive(ctx: Context, i: Intent) { KeepAlive.ensureFloat(ctx); KeepAlive.ensureBar(ctx) }
 }

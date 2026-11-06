@@ -83,6 +83,8 @@ object Show {
     // The floating Back/Home pill shows just two buttons by default (owner: «زرين بس»); its RAM/CPU readout is opt-in.
     const val MINI_FLOAT = "mini_stats_float"
     const val FLOAT_AUTOHIDE = "float_autohide" // hide Back/Home after 4 s idle — off by default (owner wants them always visible)
+    // Hide the factory climate bar (default on, owner 2026-11-06). Applied by the separate bar-helper APK — see KeepAlive.ensureBar.
+    const val HIDE_BAR = "hide_climate_bar"
     private val defaultOff = setOf(MINI_FLOAT, FLOAT_AUTOHIDE)
     fun on(ctx: Context, key: String) = Apps.prefs(ctx).getBoolean(key, key !in defaultOff)
     fun toggle(ctx: Context, key: String) = Apps.prefs(ctx).edit().putBoolean(key, !on(ctx, key)).apply()

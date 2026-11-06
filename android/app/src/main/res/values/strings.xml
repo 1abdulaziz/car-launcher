@@ -97,5 +97,7 @@
     <string name="card_prayer">Next prayer</string>
     <string name="card_radio">Radio</string>
     <string name="card_none">Nothing</string>
+    <string name="hide_bar">Hide the climate bar</string>
+    <string name="bar_helper_missing">Needs the bar helper app</string>
     <string name="float_autohide">Hide Back / Home when not touching the screen</string>
 </resources>

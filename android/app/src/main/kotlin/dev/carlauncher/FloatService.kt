@@ -39,6 +39,7 @@ class FloatService : AccessibilityService() {
 
     override fun onServiceConnected() {
         running = true
+        KeepAlive.ensureBar(this) // runs after each car start (KeepAlive re-enables this service), so the bar is re-hidden late in boot too
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
